@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<meta name="referrer" content="no-referrer">
+<title>Ritorno al sito…</title>
+<style>body{font:16px system-ui,sans-serif;display:grid;place-items:center;min-height:90vh;margin:0;padding:16px;color:#333}a{color:#0f766e}</style>
+</head>
+<body>
+<p id="msg">Ritorno a <b>Le mie finanze</b>…</p>
+<script>
+  // Pagina "ponte": la banca torna qui (indirizzo pubblico accettato da Enable Banking)
+  // e questa pagina ti rimanda subito al sito che gira sul tuo computer, con gli stessi parametri.
+  // Se avvii il sito su una porta diversa da 8000, cambiala qui sotto.
+  var SITO = "https://localhost:8000/callback";
+  var dest = SITO + window.location.search;
+  document.getElementById("msg").innerHTML += '<br><br><a href="' + dest.replace(/"/g, "%22") + '">Clicca qui se non succede nulla</a>';
+  window.location.replace(dest);
+</script>
+</body>
+</html>

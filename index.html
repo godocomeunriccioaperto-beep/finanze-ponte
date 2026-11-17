@@ -6,18 +6,46 @@
 <meta name="robots" content="noindex">
 <meta name="referrer" content="no-referrer">
 <title>Ritorno al sito…</title>
-<style>body{font:16px system-ui,sans-serif;display:grid;place-items:center;min-height:90vh;margin:0;padding:16px;color:#333}a{color:#0f766e}</style>
+<style>body{font:16px system-ui,sans-serif;display:grid;place-items:center;min-height:90vh;margin:0;padding:16px;color:#333;text-align:center}a{color:#0f766e}</style>
 </head>
 <body>
 <p id="msg">Ritorno a <b>Le mie finanze</b>…</p>
 <script>
-  // Pagina "ponte": la banca torna qui (indirizzo pubblico accettato da Enable Banking)
-  // e questa pagina ti rimanda subito al sito che gira sul tuo computer, con gli stessi parametri.
-  // Se avvii il sito su una porta diversa da 8000, cambiala qui sotto.
-  var SITO = "https://localhost:8000/callback";
-  var dest = SITO + window.location.search;
-  document.getElementById("msg").innerHTML += '<br><br><a href="' + dest.replace(/"/g, "%22") + '">Clicca qui se non succede nulla</a>';
-  window.location.replace(dest);
+  // Pagina "ponte": la banca torna qui (indirizzo pubblico accettato da Enable Banking) e questa pagina
+  // ti rimanda subito al sito che gira sul tuo computer, con gli stessi parametri.
+  // L'indirizzo da cui hai avviato il collegamento (computer o telefono) viaggia dentro "state".
+  // Per sicurezza si accettano solo indirizzi locali: il tuo computer, la rete di casa o Tailscale.
+  var PREDEFINITO = "https://localhost:8000";
+
+  function permesso(url) {
+    try { var u = new URL(url); } catch (e) { return false; }
+    if (u.protocol !== "https:" && u.protocol !== "http:") return false;
+    if (u.username || u.password || u.pathname !== "/" || u.search || u.hash) return false;
+    var h = u.hostname;
+    if (h === "localhost" || h === "localtest.me" || /\.ts\.net$/.test(h)) return true;
+    var p = h.split(".").map(Number);
+    if (p.length !== 4 || p.some(function (n) { return isNaN(n) || n < 0 || n > 255; })) return false;
+    return p[0] === 127 || p[0] === 10 || (p[0] === 192 && p[1] === 168) ||
+           (p[0] === 172 && p[1] >= 16 && p[1] <= 31) || (p[0] === 100 && p[1] >= 64 && p[1] <= 127);
+  }
+
+  function origine() {
+    var state = new URLSearchParams(location.search).get("state") || "";
+    var parte = state.split(".")[1];
+    if (!parte) return PREDEFINITO;
+    try {
+      var b64 = parte.replace(/-/g, "+").replace(/_/g, "/");
+      while (b64.length % 4) b64 += "=";
+      var url = atob(b64);
+      return permesso(url + "/") ? url.replace(/\/$/, "") : PREDEFINITO;
+    } catch (e) { return PREDEFINITO; }
+  }
+
+  var dest = origine() + "/callback" + location.search;
+  var a = document.createElement("a");
+  a.href = dest; a.textContent = "Clicca qui se non succede nulla";
+  document.getElementById("msg").append(document.createElement("br"), document.createElement("br"), a);
+  location.replace(dest);
 </script>
 </body>
 </html>
